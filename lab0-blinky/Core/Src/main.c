@@ -102,6 +102,8 @@ int main(void)
 	HAL_Delay(200);
 	// Set it low
 	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+	// Wait for the rest of the second
+	HAL_Delay(800);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
