@@ -50,11 +50,20 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+int is_blue_button_pressed();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+int is_blue_button_pressed()
+{
+	uint32_t reg_reading = GPIOC->IDR;
+	// Should be bit 13
+	// to get a bit, shift right by position number and '&' (bitwise and) with 0x01
+	// TODO figure out if 0x01 really needed; could it not be just 1?
+	return !((reg_reading >> 13) & 0x01);
+}
 
 uint32_t apa[10];
 
@@ -88,6 +97,7 @@ void test_endianness()
 	return;
 }
 
+int pressed = 0;
 /* USER CODE END 0 */
 
 /**
@@ -97,7 +107,7 @@ void test_endianness()
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	test_endianness();
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -120,13 +130,26 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  //test_endianness();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
+	  //pressed = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+	  if (is_blue_button_pressed())
+	  {
+		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+	  }
+	  else
+	  {
+		  GPIO_TypeDef* ld2_gpio 	= GPIOA;
+		  uint16_t		ld2_pin_nbr = 5;
+		  uint16_t		ld2_pin		= 0x01 << ld2_pin_nbr;
+		  HAL_GPIO_WritePin(ld2_gpio, ld2_pin, GPIO_PIN_RESET);
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
