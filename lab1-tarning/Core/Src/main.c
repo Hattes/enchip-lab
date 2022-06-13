@@ -81,6 +81,10 @@ void test_endianness()
 	uint8_t r = apa8[2];
 	uint8_t s = apa8[3];
 	uint8_t t = apa8[4];
+
+	uint16_t babe = 0xBABE;
+	apa[0] = babe;
+
 	return;
 }
 
