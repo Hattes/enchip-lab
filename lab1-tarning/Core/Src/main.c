@@ -90,57 +90,43 @@ int is_blue_button_pressed()
 	uint32_t reg_reading = GPIOC->IDR;
 	// Should be bit 13
 	// to get a bit, shift right by position number and '&' (bitwise and) with 0x01
-	// TODO figure out if 0x01 really needed; could it not be just 1?
 	return !((reg_reading >> 13) & 0x01);
 }
 
 void put_die_dots(uint8_t die_value)
 {
+	GPIO_PinState a, b, c, d, e, f, g;
+	a = b = c = d = e = f = g = GPIO_PIN_RESET;
 	switch (die_value)
 	{
 	case 1:
-		HAL_GPIO_WritePin(DI_D_GPIO_Port, DI_D_Pin, GPIO_PIN_SET);
+		d = GPIO_PIN_SET;
 		break;
 	case 2:
-		HAL_GPIO_WritePin(DI_A_GPIO_Port, DI_A_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_G_GPIO_Port, DI_G_Pin, GPIO_PIN_SET);
+		a = g = GPIO_PIN_SET;
 		break;
 	case 3:
-		HAL_GPIO_WritePin(DI_A_GPIO_Port, DI_A_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_D_GPIO_Port, DI_D_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_G_GPIO_Port, DI_G_Pin, GPIO_PIN_SET);
+		a = d = g = GPIO_PIN_SET;
 		break;
 	case 4:
-		HAL_GPIO_WritePin(DI_A_GPIO_Port, DI_A_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_C_GPIO_Port, DI_C_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_E_GPIO_Port, DI_E_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_G_GPIO_Port, DI_G_Pin, GPIO_PIN_SET);
+		a = c = e = g = GPIO_PIN_SET;
 		break;
 	case 5:
-		HAL_GPIO_WritePin(DI_A_GPIO_Port, DI_A_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_C_GPIO_Port, DI_C_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_D_GPIO_Port, DI_D_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_E_GPIO_Port, DI_E_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_G_GPIO_Port, DI_G_Pin, GPIO_PIN_SET);
+		a = c = d = e = g = GPIO_PIN_SET;
 		break;
 	case 6:
-		HAL_GPIO_WritePin(DI_A_GPIO_Port, DI_A_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_B_GPIO_Port, DI_B_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_C_GPIO_Port, DI_C_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_E_GPIO_Port, DI_E_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_F_GPIO_Port, DI_F_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_G_GPIO_Port, DI_G_Pin, GPIO_PIN_SET);
+		a = b = c = e = f = g = GPIO_PIN_SET;
 		break;
 	default:
-		HAL_GPIO_WritePin(DI_A_GPIO_Port, DI_A_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_B_GPIO_Port, DI_B_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_C_GPIO_Port, DI_C_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_D_GPIO_Port, DI_D_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_E_GPIO_Port, DI_E_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_F_GPIO_Port, DI_F_Pin, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(DI_G_GPIO_Port, DI_G_Pin, GPIO_PIN_SET);
+		a = b = c = d = e = f = g = GPIO_PIN_SET;
 	}
-
+	HAL_GPIO_WritePin(DI_A_GPIO_Port, DI_A_Pin, a);
+	HAL_GPIO_WritePin(DI_B_GPIO_Port, DI_B_Pin, b);
+	HAL_GPIO_WritePin(DI_C_GPIO_Port, DI_C_Pin, c);
+	HAL_GPIO_WritePin(DI_D_GPIO_Port, DI_D_Pin, d);
+	HAL_GPIO_WritePin(DI_E_GPIO_Port, DI_E_Pin, e);
+	HAL_GPIO_WritePin(DI_F_GPIO_Port, DI_F_Pin, f);
+	HAL_GPIO_WritePin(DI_G_GPIO_Port, DI_G_Pin, g);
 }
 
 void reset_die()
@@ -227,17 +213,10 @@ int main(void)
   uint8_t die_value = 0; // 1 <= die_value <= 6
   while (1)
   {
-	  /**for(uint8_t i = 0; i <= 9; i++) {
-		  put_on_sseg(i);
-		  HAL_Delay(333);
-	  }
-	  put_on_sseg(88);
-	  HAL_Delay(333);
-	  continue;**/
 	  if (is_blue_button_pressed())
 	  {
-		  //reset_die();
-		  put_on_sseg(0);
+		  reset_die();
+		  //put_on_sseg(0x00E);
 		  // inc die
 		  die_value++;
 		  if (die_value > 6) {
@@ -251,8 +230,8 @@ int main(void)
 		  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 	  }
 
-	  //put_die_dots(die_value);
-	  put_on_sseg(die_value);
+	  put_die_dots(die_value);
+	  //put_on_sseg(die_value);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
