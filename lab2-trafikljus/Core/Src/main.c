@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +60,8 @@ typedef enum
 TrafficLightState state;
 event last_event;
 int ticks_left_in_state;
+int button_pressed_prev_tick = 0;
+uint32_t before;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,6 +71,8 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 int is_blue_button_pressed();
 void set_traffic_lights(TrafficLightState tls);
+void tick();
+event get_event(int check_button);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -114,6 +118,29 @@ void set_traffic_lights(TrafficLightState tls)
 	HAL_GPIO_WritePin(GPIOC, PED_GRN_Pin, pg);
 	return;
 }
+
+void tick() {
+	uint32_t now = HAL_GetTick();
+	ticks_left_in_state -= now - before;
+	before = now;
+	return;
+}
+
+event get_event(int check_button) {
+	if (check_button) {
+		if (is_blue_button_pressed()) {
+			if (!button_pressed_prev_tick) {
+				button_pressed_prev_tick = 1;
+				return ev_button_press;
+			}
+		} else {
+			button_pressed_prev_tick = 0;
+		}
+	} else if (ticks_left_in_state <= 0) {
+		return ev_state_timeout;
+	}
+	return ev_none;
+}
 /* USER CODE END 0 */
 
 /**
@@ -132,7 +159,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  before = HAL_GetTick();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -146,41 +173,95 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  state = s_init;
+  set_traffic_lights(state);
+  char str[81] = { '\0'};
+  uint16_t str_len = 0;
+  str_len = sprintf(str, "Test\r\n");
+  HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	int button_just_pressed = 0;
 	while (1) {
-		event new_event = ev_none;
-		if (is_blue_button_pressed()) {
-			if (!button_just_pressed) {
-
-			}
-			button_just_pressed = 1;
+		tick();
+		event new_event = get_event(state == s_cars_go);
+		if (new_event == ev_none) {
+			//str_len = sprintf(str, "Got none\r\n");
+			//HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
 		}
+		if (new_event == ev_state_timeout) {
+			str_len = sprintf(str, "Got timeout\r\n");
+			HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
+		}
+		if (new_event == ev_button_press) {
+			str_len = sprintf(str, "Got button press\r\n");
+			HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
+		}
+		//str_len = sprintf(str, "Got event %d\r\n", new_event);
+		//HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
+
+		//str_len = sprintf(str, "Test2\r\n");
+		//HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
+
 		switch(state)
 		{
-		case s_cars_stop:
-			if (ev == ev_state_timeout) {
+		case s_init:
+			state = s_all_stop;
+			ticks_left_in_state = 2000;
+			new_event 			= ev_none;
+			str_len = sprintf(str, "Moving from s_init to s_all_stop\r\n");
+			HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
+		case s_all_stop:
+			if (new_event == ev_state_timeout) {
+				state 				= s_cars_go;
+				ticks_left_in_state = 0;
+				new_event 			= ev_none;
+				set_traffic_lights(s_cars_go);
+			}
+			break;
+		case s_cars_go:
+			if (new_event == ev_button_press) {
+				state 				= s_button_pressed;
+				ticks_left_in_state = 3000;
+				new_event 			= ev_none;
+				set_traffic_lights(s_button_pressed);
+			}
+			break;
+		case s_button_pressed:
+			if (new_event == ev_state_timeout) {
+				state 				= s_cars_stop;
 				ticks_left_in_state = 2500;
-				ev					= ev_none;
-				state				= s_cars_start;
+				new_event 			= ev_none;
+				set_traffic_lights(s_cars_stop);
+			}
+			break;
+		case s_cars_stop:
+			if (new_event == ev_state_timeout) {
+				state				= s_pedestrians_go;
+				ticks_left_in_state = 5000;
+				new_event			= ev_none;
+				set_traffic_lights(s_pedestrians_go);
+			}
+			break;
+		case s_pedestrians_go:
+			if (new_event == ev_state_timeout) {
+				state 				= s_cars_start;
+				ticks_left_in_state = 2500;
+				new_event 			= ev_none;
 				set_traffic_lights(s_cars_start);
 			}
 			break;
-		case s_all_stop:
-			break;
-		case s_cars_go:
-			break;
-		case s_button_pressed:
-			break;
-		case s_pedestrians_go:
-			break;
 		case s_cars_start:
+			if (new_event == ev_state_timeout) {
+				state 				= s_cars_go;
+				ticks_left_in_state = 0;
+				new_event 			= ev_none;
+				set_traffic_lights(s_cars_go);
+			}
 			break;
 		}
+	}
 		//for (TrafficLightState s = s_init; s <= s_cars_start; s++) {
 		//set_traffic_lights(s);
 		//HAL_Delay(300);
@@ -190,7 +271,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-}
+
 
 /**
   * @brief System Clock Configuration
