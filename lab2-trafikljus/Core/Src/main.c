@@ -57,6 +57,7 @@ typedef enum
  UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+TrafficLightState state;
 event last_event;
 int ticks_left_in_state;
 /* USER CODE END PV */
@@ -150,20 +151,40 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int button_just_pressed = 0;
-  while (1)
-  {
-	  event new_event = event_none;
-	  if (is_blue_button_pressed()) {
-		  if (!button_just_pressed) {
+	int button_just_pressed = 0;
+	while (1) {
+		event new_event = ev_none;
+		if (is_blue_button_pressed()) {
+			if (!button_just_pressed) {
 
-		  }
-		  button_just_pressed = 1;
-	  }
-	  for (TrafficLightState s = s_init; s <= s_cars_start; s++) {
-		  set_traffic_lights(s);
-		  HAL_Delay(300);
-	  }
+			}
+			button_just_pressed = 1;
+		}
+		switch(state)
+		{
+		case s_cars_stop:
+			if (ev == ev_state_timeout) {
+				ticks_left_in_state = 2500;
+				ev					= ev_none;
+				state				= s_cars_start;
+				set_traffic_lights(s_cars_start);
+			}
+			break;
+		case s_all_stop:
+			break;
+		case s_cars_go:
+			break;
+		case s_button_pressed:
+			break;
+		case s_pedestrians_go:
+			break;
+		case s_cars_start:
+			break;
+		}
+		//for (TrafficLightState s = s_init; s <= s_cars_start; s++) {
+		//set_traffic_lights(s);
+		//HAL_Delay(300);
+		//}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
