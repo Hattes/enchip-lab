@@ -39,7 +39,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
@@ -66,7 +66,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-	test_endianness();
+	//test_endianness();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -89,9 +89,6 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  char	   str[81] = { '\0' };
-  uint16_t str_len = 0;
-  int	   nblink  = 0; // number of blinks
 
   /* USER CODE END 2 */
 
@@ -102,12 +99,15 @@ int main(void)
 	// Set the pin high
 	//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
 	// Wait a fifth of a second
-	HAL_Delay(200);
+	//HAL_Delay(200);
 	// Set it low
 	//HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 	// Wait for the rest of the second
-	HAL_Delay(400);
-	HAL_GPIO_TogglePin(LD2_GPIO_Port, LED_YLW_Pin + LD2_Pin);
+	//HAL_Delay(400);
+	  HAL_Delay(333);
+	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+
+	//HAL_GPIO_TogglePin(LD2_GPIO_Port, LED_YLW_Pin + LD2_Pin);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -202,6 +202,8 @@ static void MX_USART2_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -225,6 +227,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
