@@ -26,7 +26,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum
+enum TrafficLightState
 {
 	s_init,
 	s_all_stop,
@@ -35,13 +35,13 @@ typedef enum
 	s_cars_stop,
 	s_pedestrians_go,
 	s_cars_start,
-} TrafficLightState;
-typedef enum
+};
+typedef enum event
 {
 	ev_none,
 	ev_button_press,
 	ev_state_timeout
-} event;
+};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -57,11 +57,11 @@ typedef enum
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
- TrafficLightState state;
- event last_event;
- int ticks_left_in_state;
- int button_pressed_prev_tick = 0;
- uint32_t before;
+enum TrafficLightState state;
+enum event last_event;
+int ticks_left_in_state;
+int button_pressed_prev_tick = 0;
+uint32_t before;
 
 /* USER CODE END PV */
 
