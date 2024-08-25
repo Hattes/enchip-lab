@@ -61,6 +61,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define B1_EXTI_IRQn EXTI15_10_IRQn
 #define CAR_RED_Pin GPIO_PIN_0
 #define CAR_RED_GPIO_Port GPIOC
 #define CAR_YLW_Pin GPIO_PIN_1
@@ -85,7 +86,7 @@ void Error_Handler(void);
 #define SWO_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+void my_systick_handler();
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

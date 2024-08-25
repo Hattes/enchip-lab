@@ -53,7 +53,9 @@ enum TrafficEvent
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define USING_ISR 0
+#define USING_ISR 1
+int32_t ticks_left_in_state = 0;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -164,6 +166,27 @@ enum TrafficEvent evq_pop_front()
 	return e;
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == B1_Pin)
+	{
+		evq_push_back(ev_button_press);
+	}
+}
+
+void my_systick_handler()
+{
+	if (ticks_left_in_state > 0)
+	{
+		ticks_left_in_state--;
+		if (ticks_left_in_state == 0)
+		{
+			evq_push_back(ev_state_timeout);
+		}
+	}
+
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -208,12 +231,13 @@ int main(void)
 
 	enum TrafficLightState state = s_init;
 	enum TrafficEvent ev = ev_none;
+#if USING_ISR
+#else
 	int curr_pressed, last_pressed;
 	curr_pressed = last_pressed = is_blue_button_pressed();
 	uint32_t curr_tick, last_tick;
 	curr_tick = last_tick = HAL_GetTick();
-	int32_t ticks_left_in_state = 0;
-
+#endif
 	set_traffic_lights(state);
 
 	evq_init();
@@ -243,15 +267,7 @@ int main(void)
 				{
 					evq_push_back(ev_state_timeout);
 				}
-				else
-				{
-					evq_push_back(ev_none);
-				}
 			}
-		}
-		else
-		{
-			evq_push_back(ev_none);
 		}
 #endif
 
@@ -512,6 +528,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
