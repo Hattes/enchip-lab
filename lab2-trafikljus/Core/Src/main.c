@@ -29,7 +29,7 @@
 /* USER CODE BEGIN PTD */
 
 // TODO add missing all-red states
-typedef enum
+enum TrafficLightState
 {
 	s_init,
 	s_all_stop,
@@ -39,14 +39,15 @@ typedef enum
 	s_pedestrians_go,
 	s_cars_start,
 	s_NUM_STATES,
-} TrafficLightState;
+};
 
-typedef enum
+enum TrafficEvent
 {
 	ev_none,
 	ev_button_press,
-	ev_state_timeout
-} TrafficEvent;
+	ev_state_timeout,
+	ev_error = -99,
+};
 
 /* USER CODE END PTD */
 
@@ -66,11 +67,6 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-TrafficLightState state;
-TrafficEvent last_event;
-int ticks_left_in_state;
-int button_pressed_prev_tick = 0; // true/false
-uint32_t before;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,9 +76,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 int is_blue_button_pressed();
-void set_traffic_lights(TrafficLightState tls);
-void tick();
-TrafficEvent get_event(int check_button);
+void set_traffic_lights(enum TrafficLightState tls);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -95,7 +89,7 @@ int is_blue_button_pressed()
 	return !((reg_reading >> 13) & 0x01);
 }
 
-void set_traffic_lights(TrafficLightState tls)
+void set_traffic_lights(enum TrafficLightState tls)
 {
 	GPIO_PinState cr, cy, cg, pr, pg;
 	cr = cy = cg = pr = pg = GPIO_PIN_RESET;
@@ -129,28 +123,26 @@ void set_traffic_lights(TrafficLightState tls)
 	return;
 }
 
-void tick() {
-	uint32_t now = HAL_GetTick();
-	ticks_left_in_state -= now - before;
-	before = now;
-	return;
+#define EVQ_SIZE 10
+
+enum TrafficEvent evq[ EVQ_SIZE ];
+int evq_count		= 0;
+int evq_front_ix 	= 0;
+int evq_rear_ix		= 0;
+
+void evq_init()
+{
+	for (int x = 0; x < EVQ_SIZE; x++)
+	{
+		evq[x] = ev_error;
+	}
 }
 
-TrafficEvent get_event(int check_button) {
-	if (check_button) {
-		if (is_blue_button_pressed()) {
-			if (!button_pressed_prev_tick) {
-				button_pressed_prev_tick = 1;
-				return ev_button_press;
-			}
-		} else {
-			button_pressed_prev_tick = 0;
-		}
-	} else if (ticks_left_in_state <= 0) {
-		return ev_state_timeout;
-	}
-	return ev_none;
+void evq_push_back(enum TrafficEvent e)
+{
+
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -170,7 +162,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-	before = HAL_GetTick();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -185,12 +176,6 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-	state = s_init;
-	set_traffic_lights(state);
-	//char str[81] = { '\0'};
-	//uint16_t str_len = 0;
-	//str_len = sprintf(str, "Test\r\n");
-	//	HAL_UART_Transmit(&huart2, (uint8_t*) str, str_len, HAL_MAX_DELAY);
 
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 	abuzz_start();
@@ -200,8 +185,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-	TrafficLightState state = s_init;
-	TrafficEvent ev = ev_none;
+	enum TrafficLightState state = s_init;
+	enum TrafficEvent ev = ev_none;
 	int curr_pressed, last_pressed;
 	curr_pressed = last_pressed = is_blue_button_pressed();
 	uint32_t curr_tick, last_tick;
