@@ -140,7 +140,28 @@ void evq_init()
 
 void evq_push_back(enum TrafficEvent e)
 {
+	if (evq_count == EVQ_SIZE)
+	{
+		return;
+	}
+	evq[evq_rear_ix] = e;
+	evq_rear_ix++;
+	evq_rear_ix %= EVQ_SIZE;
+	evq_count++;
+}
 
+enum TrafficEvent evq_pop_front()
+{
+	if (evq_count == 0)
+	{
+		return ev_none;
+	}
+	enum TrafficEvent e = evq[evq_front_ix];
+	evq[evq_front_ix] = ev_error;
+	evq_front_ix++;
+	evq_front_ix %= EVQ_SIZE;
+	evq_count--;
+	return e;
 }
 
 /* USER CODE END 0 */
@@ -195,6 +216,8 @@ int main(void)
 
 	set_traffic_lights(state);
 
+	evq_init();
+
 	while (1) {
 
 #if USING_ISR
@@ -206,7 +229,7 @@ int main(void)
 
 		if (curr_pressed && !last_pressed)
 		{
-			ev = ev_button_press;
+			evq_push_back(ev_button_press);
 		}
 		else if (ticks_left_in_state > 0)
 		{
@@ -218,20 +241,21 @@ int main(void)
 				ticks_left_in_state -= 1;
 				if (ticks_left_in_state == 0)
 				{
-					ev = ev_state_timeout;
+					evq_push_back(ev_state_timeout);
 				}
 				else
 				{
-					ev = ev_none;
+					evq_push_back(ev_none);
 				}
 			}
 		}
 		else
 		{
-			ev = ev_none;
+			evq_push_back(ev_none);
 		}
 #endif
 
+		ev = evq_pop_front();
 		switch(state)
 		{
 		case s_init:
