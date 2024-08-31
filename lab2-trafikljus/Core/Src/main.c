@@ -296,7 +296,8 @@ int main(void)
 				state 				= s_button_pressed;
 				ticks_left_in_state = 3000;
 				ev 			= ev_none;
-				set_traffic_lights(s_button_pressed);
+				//set_traffic_lights(s_button_pressed);
+				//TODO just set indicator light
 			}
 			break;
 		case s_button_pressed:
